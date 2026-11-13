@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PUMA - Digital Display Manager 2026 (v7)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@600;700&display=swap');
+        
+        body { 
+            font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif; 
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .puma-font-title, .puma-wordmark {
+            font-family: 'Oswald', 'Arial Narrow', Impact, sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        /* Estilos Pestañas */
+        .tab-btn.active {
+            font-weight: 700;
+        }
+        .dark .tab-btn.active {
+            border-bottom: 3px solid currentColor;
+            color: #FFFFFF;
+        }
+        html:not(.dark) .tab-btn.active {
+            border-bottom: 3px solid currentColor;
+            color: #000000;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between bg-white text-gray-900 dark:bg-black dark:text-white">
+
+    <!-- PANTALLA DE LOGIN PREVIO -->
+    <div id="loginOverlay" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-100 dark:bg-black p-4 transition-colors">
+        <div class="w-full max-w-md bg-white dark:bg-[#0D0D0D] border border-gray-200 dark:border-neutral-800 border-t-4 border-t-black dark:border-t-white rounded-2xl p-8 shadow-2xl space-y-6">
+            <div class="text-center space-y-2 flex flex-col items-center">
+                <!-- Logo PUMA Oficial -->
+                <div class="inline-flex flex-col items-center justify-center">
+                    <img src="https://lh3.googleusercontent.com/d/1rt3I_KyfOnr5e2ZICZE61Y9Ovd5q-Hkb" alt="PUMA" class="h-14 w-auto object-contain block dark:hidden">
+                    <img src="https://lh3.googleusercontent.com/d/1RMc0_31AY5-m8mLQOc--O5MsYOu73WnQ" alt="PUMA" class="h-14 w-auto object-contain hidden dark:block">
+                </div>
+                <h2 class="puma-font-title text-2xl tracking-wider text-black dark:text-white mt-2">DIGITAL DISPLAY MANAGER</h2>
+                <p class="text-xs text-gray-500 dark:text-neutral-400">Ingresa tus credenciales para acceder a la plataforma</p>
+            </div>
+
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-600 dark:text-neutral-400 mb-1">Usuario</label>
+                    <div class="flex items-center bg-gray-50 dark:bg-neutral-900 border border-gray-300 dark:border-neutral-800 rounded-lg px-3 py-2 text-xs">
+                        <i class="fa-solid fa-user text-gray-400 dark:text-neutral-500 mr-2"></i>
+                        <input type="text" id="loginUsername" placeholder="Usuario" required autocomplete="username" class="bg-transparent w-full text-black dark:text-white focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-600 dark:text-neutral-400 mb-1">Contraseña</label>
+                    <div class="flex items-center bg-gray-50 dark:bg-neutral-900 border border-gray-300 dark:border-neutral-800 rounded-lg px-3 py-2 text-xs">
+                        <i class="fa-solid fa-lock text-gray-400 dark:text-neutral-500 mr-2"></i>
+                        <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password" class="bg-transparent w-full text-black dark:text-white focus:outline-none">
+                    </div>
+                </div>
+
+                <div id="loginError" class="hidden text-red-500 text-[11px] font-bold text-center bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 py-2 rounded-lg">
+                    Usuario o contraseña incorrectos
+                </div>
+
+                <button type="submit" id="loginBtn" class="w-full bg-black text-white dark:bg-white dark:text-black py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider hover:bg-black dark:bg-white dark:hover:bg-black dark:bg-white dark:hover:text-white transition shadow-md">
+                    Iniciar Sesión
+                </button>
+            </form>
+
+            <div class="text-center pt-2 border-t border-gray-100 dark:border-neutral-900">
+                <span class="text-[9px] text-gray-400 dark:text-neutral-500 uppercase tracking-widest block">Powered by</span>
+                <span class="text-xs font-bold text-gray-700 dark:text-neutral-300">Convergencia Digital</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTENIDO DEL DASHBOARD -->
+    <div id="dashboardApp" class="hidden flex-col justify-between min-h-screen">
+        <div>
+            <!-- Header Principal Navbar -->
+            <header class="bg-white dark:bg-black border-t-4 border-t-black dark:border-t-white border-b border-gray-200 dark:border-neutral-800 px-6 py-4 sticky top-0 z-40 shadow-sm transition-colors">
+                <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
+                    <div class="flex items-center space-x-4">
+                        <!-- Logo PUMA Oficial Header -->
+                        <div class="flex items-center">
+                            <img src="https://lh3.googleusercontent.com/d/1rt3I_KyfOnr5e2ZICZE61Y9Ovd5q-Hkb" alt="PUMA" class="h-9 w-auto object-contain block dark:hidden">
+                            <img src="https://lh3.googleusercontent.com/d/1RMc0_31AY5-m8mLQOc--O5MsYOu73WnQ" alt="PUMA" class="h-9 w-auto object-contain hidden dark:block">
+                        </div>
+                        <div class="h-8 w-px bg-gray-200 dark:bg-neutral-800"></div>
+                        <div>
+                            <h1 class="puma-font-title text-xl tracking-wider text-black dark:text-white leading-tight">DIGITAL DISPLAY MANAGER 2026</h1>
+                            <p class="text-[11px] text-gray-500 dark:text-neutral-400">Control de campañas y pantallas</p>
+                        </div>
+                    </div>
+
+                    <!-- Botones de Control & Sincronización -->
+                    <div class="flex items-center space-x-3">
+                        <div class="text-right hidden sm:block mr-2">
+                            <span class="text-[9px] text-gray-400 dark:text-neutral-500 block uppercase tracking-widest">Powered by</span>
+                            <span class="text-xs font-bold text-gray-700 dark:text-neutral-300">Convergencia Digital</span>
+                        </div>
+
+                        <!-- Botón Alternar Tema Dark/Light -->
+                        <button id="themeToggleBtn" onclick="toggleTheme()" class="bg-gray-100 dark:bg-neutral-900 hover:bg-gray-200 dark:hover:bg-neutral-800 text-gray-800 dark:text-neutral-200 border border-gray-300 dark:border-neutral-800 text-xs px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5 transition">
+                            <i id="themeIcon" class="fa-solid fa-moon text-amber-400"></i>
+                            <span id="themeText">Dark</span>
+                        </button>
+
+                        <!-- Botón de Sincronización Manual -->
+                        <button id="btnManualSync" onclick="manualSync()" class="bg-gray-100 dark:bg-neutral-900 hover:bg-gray-200 dark:hover:bg-neutral-800 text-gray-800 dark:text-neutral-200 border border-gray-300 dark:border-neutral-800 text-xs px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5 transition">
+                            <i id="syncIcon" class="fa-solid fa-rotate text-xs"></i> <span>Sincronizar</span>
+                        </button>
+
+                        <span id="syncStatus" class="bg-emerald-50 dark:bg-emerald-600/20 border border-emerald-300 dark:border-emerald-500/40 text-emerald-700 dark:text-emerald-400 text-xs px-3 py-1.5 rounded-full font-medium flex items-center gap-1.5">
+                            <span class="w-2 h-2 bg-emerald-500 dark:bg-emerald-400 rounded-full animate-ping"></span> Conexión Segura
+                        </span>
+
+                        <!-- Botón Cerrar Sesión -->
+                        <button onclick="logout()" title="Cerrar sesión" class="bg-gray-100 dark:bg-neutral-900 hover:bg-red-50 dark:hover:bg-red-950/40 text-gray-700 dark:text-neutral-400 hover:text-red-600 dark:hover:text-red-400 border border-gray-300 dark:border-neutral-800 text-xs px-3 py-1.5 rounded-full font-bold transition ml-2">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <main class="max-w-7xl mx-auto p-4 md:p-6 space-y-8">
+
+                <!-- SECTOR: ESTADO DE RED & CAMPAÑAS ACTIVAS -->
+                <div class="space-y-4">
+                    <div class="flex flex-wrap justify-between items-end border-b border-gray-200 dark:border-neutral-800 pb-3 gap-2">
+                        <div>
+                            <span class="text-[10px] text-gray-400 dark:text-neutral-500 font-bold tracking-widest uppercase block">ESTADO DE RED</span>
+                            <h2 class="text-3xl md:text-4xl puma-font-title text-black dark:text-white">CAMPAÑAS ACTIVAS</h2>
+                        </div>
+                    </div>
+
+                    <!-- Banner Resumen Global -->
+                    <div class="bg-gray-100 text-black dark:bg-neutral-900 dark:text-white border border-gray-200 dark:border-neutral-800 border-l-8 border-l-black dark:border-l-white p-6 rounded-none flex flex-wrap justify-between items-center shadow-sm gap-4 transition-colors">
+                        <div>
+                            <h3 class="text-2xl md:text-3xl puma-font-title leading-tight">RESUMEN<br>GLOBAL</h3>
+                        </div>
+                        <div class="flex items-center space-x-8 sm:space-x-12 text-right">
+                            <div>
+                                <span id="kpiCampaignsCount" class="puma-font-title text-5xl sm:text-6xl block leading-none">0</span>
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-neutral-400">CAMPAÑAS</span>
+                            </div>
+                            <div>
+                                <span id="kpiScreensCount" class="puma-font-title text-5xl sm:text-6xl block leading-none">0</span>
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-neutral-400">POSICIONES</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fila de 3 Módulos Analíticos Dinámicos -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        
+                        <!-- Módulo 1: Top Posiciones x Campaña -->
+                        <div class="bg-white dark:bg-[#0D0D0D] border border-gray-200 dark:border-[#1F1F1F] p-4 rounded-lg space-y-3 shadow-sm transition-colors">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-black dark:text-white border-b border-gray-200 dark:border-neutral-800 pb-2">TOP POSICIONES X CAMPAÑA</h4>
+                            <div id="topPositionsContainer" class="space-y-2.5 text-[11px]">
+                                <div class="text-gray-400 dark:text-neutral-500 text-xs">Cargando métricas...</div>
+                            </div>
+                        </div>
+
+                        <!-- Módulo 2: Prontas a Vencer -->
+                        <div class="bg-white dark:bg-[#0D0D0D] border border-gray-200 dark:border-[#1F1F1F] p-4 rounded-lg space-y-3 shadow-sm transition-colors">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-black dark:text-white border-b border-gray-200 dark:border-neutral-800 pb-2">PRONTAS A VENCER</h4>
+                            <div id="expiringContainer" class="space-y-2">
+                                <div class="text-gray-400 dark:text-neutral-500 text-xs">Cargando vencimientos...</div>
+                            </div>
+                        </div>
+
+                        <!-- Módulo 3: Lanzamientos de Campañas por Posición -->
+                        <div class="bg-white dark:bg-[#0D0D0D] border border-gray-200 dark:border-[#1F1F1F] p-4 rounded-lg space-y-3 shadow-sm transition-colors">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-black dark:text-white border-b border-gray-200 dark:border-neutral-800 pb-2">LANZAMIENTOS DE CAMPAÑAS POR POSICIÓN</h4>
+                            <div id="launchesContainer" class="flex items-end justify-between h-28 pt-4 px-2">
+                                <div class="text-gray-400 dark:text-neutral-500 text-xs w-full text-center">Cargando cronograma...</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Navegación por Pestañas -->
+                <div class="bg-white dark:bg-[#0D0D0D] rounded-xl border border-gray-200 dark:border-[#1F1F1F] p-2 flex flex-wrap justify-between items-center gap-4 shadow-sm transition-colors">
+                    <div class="flex space-x-2 border-b border-gray-200 dark:border-neutral-800 sm:border-0 w-full sm:w-auto">
+                        <button id="tab1-btn" onclick="switchTab('tab1')" class="tab-btn active px-4 py-2 text-xs uppercase tracking-wider font-bold text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white transition flex items-center gap-2">
+                            <i class="fa-solid fa-layer-group"></i> 1. Tiendas Agrupadas por Campañas
+                        </button>
+                        <button id="tab2-btn" onclick="switchTab('tab2')" class="tab-btn px-4 py-2 text-xs uppercase tracking-wider font-bold text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white transition flex items-center gap-2">
+                            <i class="fa-solid fa-desktop"></i> 2. Posiciones Individuales
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-lg w-full sm:w-72 text-xs">
+                        <i class="fa-solid fa-magnifying-glass text-gray-400 dark:text-neutral-500"></i>
+                        <input type="text" id="searchInput" placeholder="Buscar campaña, tienda, ID..." class="bg-transparent w-full text-black dark:text-white focus:outline-none placeholder-gray-400 dark:placeholder-neutral-500">
+                    </div>
+                </div>
+
+                <!-- APARTADO 1: TIENDAS AGRUPADAS POR CAMPAÑAS -->
+                <section id="tab1-content" class="space-y-4">
+                    <div id="campaignsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+                </section>
+
+                <!-- APARTADO 2: POSICIONES INDIVIDUALES -->
+                <section id="tab2-content" class="hidden space-y-4">
+                    <div class="bg-white dark:bg-[#0D0D0D] rounded-xl border border-gray-200 dark:border-[#1F1F1F] overflow-x-auto shadow-sm transition-colors">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100 dark:bg-neutral-900 text-gray-700 dark:text-neutral-400 text-[11px] uppercase tracking-wider font-bold border-b border-gray-200 dark:border-neutral-800">
+                                    <th class="p-3.5 whitespace-nowrap">ID</th>
+                                    <th class="p-3.5">Sucursal / Dirección</th>
+                                    <th class="p-3.5">Detalle Técnico Pantalla</th>
+                                    <th class="p-3.5">Ubicación en Tienda</th>
+                                    <th class="p-3.5">Campañas Activas</th>
+                                    <th class="p-3.5">Estatus Player</th>
+                                    <th class="p-3.5">Soporte Técnico</th>
+                                </tr>
+                            </thead>
+                            <tbody id="individualTableBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+
+        <!-- Footer -->
+        <footer class="bg-white dark:bg-black border-t border-gray-200 dark:border-neutral-800 mt-12 py-6 px-6 shadow-inner transition-colors">
+            <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-gray-500 dark:text-neutral-500">
+                <div>Plataforma de Control Digital © 2026 PUMA</div>
+                <div class="flex items-center space-x-3 bg-gray-100 dark:bg-neutral-900 px-4 py-2 rounded-xl border border-gray-200 dark:border-neutral-800">
+                    <span class="text-gray-500 dark:text-neutral-500 text-[11px]">Desarrollado e Integrado por</span>
+                    <span class="font-bold text-black dark:text-white tracking-wider uppercase">CONVERGENCIA DIGITAL</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modal Ticket -->
+    <div id="ticketModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-[#0D0D0D] border border-gray-200 dark:border-neutral-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative text-black dark:text-white">
+            <button onclick="closeModal('ticketModal')" class="absolute top-4 right-4 text-gray-400 dark:text-neutral-500 hover:text-black dark:hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="text-base font-bold uppercase tracking-wider flex items-center gap-2 text-black dark:text-white"><i class="fa-solid fa-ticket text-amber-500"></i> Gestión de Ticket de Soporte</h3>
+            <div id="ticketContent" class="mt-4 space-y-3 text-xs"></div>
+        </div>
+    </div>
+
+    <script>
+        // =========================================================================
+        // 1. ENDPOINT ÚNICO Y SEGURO (GOOGLE APPS SCRIPT PRIVADO DE PUMA)
+        // =========================================================================
+        const APPS_SCRIPT_API_URL = 'https://script.google.com/macros/s/AKfycbyglXyVa9UwUr9NufFOLr6pznouqfusoICeZxDOMSSm2Q6ldA9xnr4-yUdANVYkRKo_jw/exec';
+
+        // Diccionario base precargado desde la pestaña STATS_URL (se complementa dinámicamente desde Sheets)
+        const DEFAULT_STATS_MAP = {
+            'ARRIVAL': 'https://play.ar.cityscreen.cloud/#/campaign-stats?uuid=fcc9a52f-a948-4764-8057-cc9d6b9d463a',
+            'DEVIATE': 'https://play.ar.cityscreen.cloud/#/campaign-stats?uuid=589e2f3f-e49c-4200-a23d-64631208dc61',
+            'RUNNING GENERICO': 'https://play.ar.cityscreen.cloud/#/campaign-stats?uuid=6e9c2cd1-dc47-48bb-88ec-b214f78df74e',
+            'HYROX': 'https://play.ar.cityscreen.cloud/#/campaign-stats?uuid=20494305-de8a-4fe5-8475-366c2d7eb286',
+            'VELOCITY': 'https://play.ar.cityscreen.cloud/#/campaign-stats?uuid=5a96a90b-7f6d-4f8d-840b-6fdb59a51e3e',
+            'SPORTSTYLE GENERICO': 'https://play.ar.cityscreen.cloud/#/campaign-stats?uuid=68a9a77b-ae6f-4233-8d9f-70ace45b4476',
+            'SUEDE_BLOOM': 'https://play.ar.cityscreen.cloud/#/campaign-stats?uuid=fcc9a52f-a948-4764-8057-cc9d6b9d463a'
+        };
+
+        // Credenciales SHA-256 -> Usuario: Puma (case-insensitive) | Contraseña: Puma (case-sensitive)
+        const USER_HASH = '86505085bb4773d538be62d71cb937cdeedd009e647e3fa5a968edf23b4c72a3';
+        const PASS_HASH = '831ad4c5b4d1204d3e1f68e58a048eedd21dd6b5d7e91b24f7d69cd82446911c';
+
+        let screensData = [];
+        let dynamicStatsMap = { ...DEFAULT_STATS_MAP };
+
+        // =========================================================================
+        // 2. AUTENTICACIÓN Y TEMA
+        // =========================================================================
+        async function sha256(str) {
+            const buffer = new TextEncoder().encode(str);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const inputUser = document.getElementById('loginUsername').value.trim().toLowerCase();
+            const inputPass = document.getElementById('loginPassword').value.trim();
+            const errorDiv = document.getElementById('loginError');
+
+            const inputUserHash = await sha256(inputUser);
+            const inputPassHash = await sha256(inputPass);
+
+            if (inputUserHash === USER_HASH && inputPassHash === PASS_HASH) {
+                sessionStorage.setItem('puma_session', 'authenticated');
+                errorDiv.classList.add('hidden');
+                showDashboard();
+            } else {
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        function checkAuth() {
+            if (sessionStorage.getItem('puma_session') === 'authenticated') {
+                showDashboard();
+            } else {
+                document.getElementById('loginOverlay').classList.remove('hidden');
+                document.getElementById('dashboardApp').classList.add('hidden');
+                document.getElementById('dashboardApp').classList.remove('flex');
+            }
+        }
+
+        function showDashboard() {
+            document.getElementById('loginOverlay').classList.add('hidden');
+            const dash = document.getElementById('dashboardApp');
+            dash.classList.remove('hidden');
+            dash.classList.add('flex');
+            fetchSheetsData();
+        }
+
+        function logout() {
+            sessionStorage.removeItem('puma_session');
+            location.reload();
+        }
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+                updateThemeUI(true);
+            } else {
+                document.documentElement.classList.remove('dark');
+                updateThemeUI(false);
+            }
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateThemeUI(isDark);
+            renderAnalyticsModules();
+            renderTab1();
+            renderTab2();
+        }
+
+        function updateThemeUI(isDark) {
+            const icon = document.getElementById('themeIcon');
+            const text = document.getElementById('themeText');
+            if (isDark) {
+                icon.className = 'fa-solid fa-moon text-amber-400';
+                text.innerText = 'Dark';
+            } else {
+                icon.className = 'fa-solid fa-sun text-amber-500';
+                text.innerText = 'Light';
+            }
+        }
+
+        // =========================================================================
+        // 3. LECTURA PRIVADA DESDE GOOGLE APPS SCRIPT (JSON AUTENTICADO)
+        // =========================================================================
+        function resolveStatsUrl(campName) {
+            const cleanCamp = campName.trim().toUpperCase();
+            if (dynamicStatsMap[cleanCamp]) return dynamicStatsMap[cleanCamp];
+            for (const [key, url] of Object.entries(dynamicStatsMap)) {
+                if (cleanCamp.includes(key.toUpperCase())) {
+                    return url;
+                }
+            }
+            return 'https://play.ar.cityscreen.cloud';
+        }
+
+        function parseStatsRows(rows) {
+            if (!Array.isArray(rows)) return;
+            rows.forEach(row => {
+                if (!row || row.length < 2) return;
+                const key = row[0] ? row[0].toString().trim().toUpperCase() : '';
+                const val = row[1] ? row[1].toString().trim() : '';
+                if (key && key !== 'CAMPAÑA_ACTIVA' && val.startsWith('http')) {
+                    dynamicStatsMap[key] = val;
+                }
+            });
+        }
+
+        function parseMatrizRows(rows) {
+            if (!Array.isArray(rows)) return [];
+            const result = [];
+            let caducidadColIndex = -1;
+
+            rows.forEach(r => {
+                if (r && r.some(c => c && c.toString().toLowerCase().includes('caducidad'))) {
+                    caducidadColIndex = r.findIndex(c => c && c.toString().toLowerCase().includes('caducidad'));
+                }
+            });
+
+            rows.forEach(row => {
+                if (!row || row.length === 0) return;
+                const idIndex = row.findIndex(cell => cell && cell.toString().trim().toUpperCase().startsWith('PUM-'));
+                if (idIndex !== -1) {
+                    const id = row[idIndex].trim();
+                    const sucursal = row[idIndex + 1] ? row[idIndex + 1].toString().trim() : 'Sin Nombre';
+                    const pantalla = row[idIndex + 2] ? row[idIndex + 2].toString().trim() : 'Pantalla LED';
+                    const orientacion = row[idIndex + 3] ? row[idIndex + 3].toString().trim() : 'Horizontal';
+                    const res = row[idIndex + 4] ? row[idIndex + 4].toString().trim() : '1080x1920';
+                    const ubicacion = row[idIndex + 5] ? row[idIndex + 5].toString().trim() : 'En local';
+
+                    // Hasta 3 campañas activas por pantalla (columnas 6, 7, 8)
+                    const c1 = row[idIndex + 6] ? row[idIndex + 6].toString().trim() : '';
+                    const c2 = row[idIndex + 7] ? row[idIndex + 7].toString().trim() : '';
+                    const c3 = row[idIndex + 8] ? row[idIndex + 8].toString().trim() : '';
+                    const campaigns = [c1, c2, c3].filter(c => c !== '' && c.toLowerCase() !== 'nan');
+                    if (campaigns.length === 0) campaigns.push('Sin Campaña');
+
+                    const fecha_objetivo = row[idIndex + 10] ? row[idIndex + 10].toString().trim() : '';
+                    const fecha_inicio = row[idIndex + 11] ? row[idIndex + 11].toString().trim() : '';
+                    const estado = row[idIndex + 12] ? row[idIndex + 12].toString().trim() : 'Publicado';
+
+                    const direccion = row[idIndex + 21] ? row[idIndex + 21].toString().trim() : '';
+                    const obsTechCol = row[idIndex + 23] ? row[idIndex + 23].toString().trim() : '';
+                    const ticketCol = row[idIndex + 24] ? row[idIndex + 24].toString().trim() : '';
+
+                    let fecha_caducidad = '';
+                    if (caducidadColIndex !== -1 && row[caducidadColIndex]) {
+                        fecha_caducidad = row[caducidadColIndex].toString().trim();
+                    } else if (row[idIndex + 25]) {
+                        fecha_caducidad = row[idIndex + 25].toString().trim();
+                    }
+
+                    let ticket_info = null;
+                    const combinedTicketStr = `${ticketCol} ${obsTechCol}`.trim();
+
+                    if (combinedTicketStr.length > 0) {
+                        const freshdeskUrlMatch = combinedTicketStr.match(/https?:\/\/[^\s"]*freshdesk[^\s"]*/i);
+                        const genericUrlMatch = combinedTicketStr.match(/https?:\/\/[^\s"]+/i);
+                        const ticketCodeMatch = combinedTicketStr.match(/#?TK-[\w\d]+/i) || combinedTicketStr.match(/TK-[\w\d]+/i);
+
+                        const validUrl = freshdeskUrlMatch ? freshdeskUrlMatch[0] : (genericUrlMatch && !genericUrlMatch[0].includes('drive.google.com') ? genericUrlMatch[0] : null);
+
+                        if (ticketCodeMatch || validUrl) {
+                            let labelText = 'VER TICKET';
+                            if (ticketCodeMatch) {
+                                labelText = ticketCodeMatch[0].toUpperCase();
+                                if (!labelText.startsWith('#')) labelText = '#' + labelText;
+                            }
+
+                            ticket_info = {
+                                text: labelText,
+                                url: validUrl
+                            };
+                        }
+                    }
+
+                    const isManualOffline = estado.toLowerCase().includes('off') || estado.toLowerCase().includes('paus') || estado.toLowerCase().includes('caid');
+
+                    result.push({
+                        id,
+                        sucursal,
+                        pantalla,
+                        orientacion,
+                        res,
+                        ubicacion,
+                        campaigns,
+                        fecha_objetivo,
+                        fecha_inicio,
+                        fecha_caducidad,
+                        estado,
+                        direccion,
+                        status: isManualOffline ? 'Offline' : 'Online',
+                        ticket: ticket_info
+                    });
+                }
+            });
+            return result;
+        }
+
+        async function fetchSheetsData(onComplete) {
+            const statusBadge = document.getElementById('syncStatus');
+            try {
+                const secureUrl = `${APPS_SCRIPT_API_URL}?u=${encodeURIComponent(USER_HASH)}&p=${encodeURIComponent(PASS_HASH)}`;
+                const response = await fetch(secureUrl, {
+                    method: 'GET',
+                    redirect: 'follow'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP Error: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.error) {
+                    console.error("Acceso denegado por el servidor:", data.error);
+                    if (statusBadge) {
+                        statusBadge.className = "bg-red-50 dark:bg-red-950/60 border border-red-300 dark:border-red-500/40 text-red-700 dark:text-red-400 text-xs px-3 py-1.5 rounded-full font-medium flex items-center gap-1.5";
+                        statusBadge.innerHTML = `<i class="fa-solid fa-lock"></i> Error Auth`;
+                    }
+                    if (onComplete) onComplete();
+                    return;
+                }
+
+                if (data.stats) {
+                    parseStatsRows(data.stats);
+                }
+
+                if (data.matriz) {
+                    const parsed = parseMatrizRows(data.matriz);
+                    if (parsed.length > 0) {
+                        screensData = parsed;
+                        const currentSearch = document.getElementById('searchInput').value || '';
+                        renderTab1(currentSearch);
+                        renderTab2(currentSearch);
+                        updateKPIs();
+                        renderAnalyticsModules();
+                    }
+                }
+
+                if (statusBadge) {
+                    statusBadge.className = "bg-emerald-50 dark:bg-emerald-600/20 border border-emerald-300 dark:border-emerald-500/40 text-emerald-700 dark:text-emerald-400 text-xs px-3 py-1.5 rounded-full font-medium flex items-center gap-1.5";
+                    statusBadge.innerHTML = `<span class="w-2 h-2 bg-emerald-500 dark:bg-emerald-400 rounded-full animate-ping"></span> Conexión Segura`;
+                }
+            } catch (err) {
+                console.error("Error al conectar con Apps Script privado:", err);
+                if (statusBadge) {
+                    statusBadge.className = "bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-500/40 text-amber-700 dark:text-amber-400 text-xs px-3 py-1.5 rounded-full font-medium flex items-center gap-1.5";
+                    statusBadge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Sin conexión`;
+                }
+            } finally {
+                if (onComplete) onComplete();
+            }
+        }
+
+        function manualSync() {
+            const syncIcon = document.getElementById('syncIcon');
+            const syncBtn = document.getElementById('btnManualSync');
+            
+            syncIcon.classList.add('fa-spin');
+            syncBtn.classList.add('opacity-50', 'pointer-events-none');
+            
+            fetchSheetsData(() => {
+                setTimeout(() => {
+                    syncIcon.classList.remove('fa-spin');
+                    syncBtn.classList.remove('opacity-50', 'pointer-events-none');
+                }, 600);
+            });
+        }
+
+        // =========================================================================
+        // 4. KPIS Y MÓDULOS ANALÍTICOS
+        // =========================================================================
+        function updateKPIs() {
+            document.getElementById('kpiScreensCount').innerText = screensData.length;
+            const uniqueCamps = new Set();
+            screensData.forEach(s => {
+                s.campaigns.forEach(c => {
+                    if (c && c !== 'Sin Campaña') uniqueCamps.add(c.trim());
+                });
+            });
+            document.getElementById('kpiCampaignsCount').innerText = uniqueCamps.size;
+        }
+
+        function parseDate(dateStr) {
+            if (!dateStr || dateStr.trim() === '') return null;
+            let parts = [];
+            if (dateStr.includes('-')) {
+                parts = dateStr.split('-');
+                if (parts.length === 3) return new Date(parts[0], parts[1] - 1, parts[2]);
+            } else if (dateStr.includes('/')) {
+                parts = dateStr.split('/');
+                if (parts.length === 3) return new Date(parts[2], parts[1] - 1, parts[0]);
+            }
+            return null;
+        }
+
+        function renderAnalyticsModules() {
+            if (screensData.length === 0) return;
+
+            // 1. TOP POSICIONES X CAMPAÑA
+            const campCounts = {};
+            screensData.forEach(s => {
+                s.campaigns.forEach(rawC => {
+                    const c = rawC.trim();
+                    if (c && c !== 'Sin Campaña') {
+                        campCounts[c] = (campCounts[c] || 0) + 1;
+                    }
+                });
+            });
+
+            const sortedCamps = Object.entries(campCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            const maxVal = sortedCamps[0] ? sortedCamps[0][1] : 1;
+
+            const topContainer = document.getElementById('topPositionsContainer');
+            topContainer.innerHTML = sortedCamps.map(([name, count]) => {
+                const pct = Math.round((count / maxVal) * 100);
+                return `
+                    <div>
+                        <div class="flex justify-between font-bold text-gray-800 dark:text-neutral-300 mb-1">
+                            <span class="truncate max-w-[180px]" title="${name}">${name}</span>
+                            <span class="text-black dark:text-white font-black">${count}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-neutral-800 h-1.5 rounded-full">
+                            <div class="bg-black dark:bg-white h-1.5 rounded-full" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // 2. PRONTAS A VENCER
+            const campGroups = {};
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            screensData.forEach(s => {
+                s.campaigns.forEach(rawC => {
+                    const c = rawC.trim();
+                    if (c && c !== 'Sin Campaña') {
+                        const dateStr = s.fecha_caducidad || s.fecha_objetivo || s.fecha_inicio;
+                        const parsedDate = parseDate(dateStr);
+
+                        if (parsedDate) {
+                            parsedDate.setHours(0, 0, 0, 0);
+                            const timeDiff = parsedDate.getTime() - today.getTime();
+                            const diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+                            if (!campGroups[c] || diffDays < campGroups[c].days) {
+                                campGroups[c] = { 
+                                    name: c, 
+                                    days: diffDays, 
+                                    store: s.sucursal.split('-')[0].trim().toUpperCase() 
+                                };
+                            }
+                        }
+                    }
+                });
+            });
+
+            const sortedExpiring = Object.values(campGroups)
+                .sort((a, b) => a.days - b.days)
+                .slice(0, 3);
+
+            const expContainer = document.getElementById('expiringContainer');
+
+            if (sortedExpiring.length === 0) {
+                expContainer.innerHTML = `<div class="text-gray-400 dark:text-neutral-500 text-xs w-full text-center py-4">Sin vencimientos próximos</div>`;
+            } else {
+                expContainer.innerHTML = sortedExpiring.map(item => {
+                    const daysVal = item.days;
+                    const displayDays = daysVal < 0 ? 0 : daysVal;
+                    const isUrgent = daysVal <= 7;
+                    const isWarning = daysVal > 7 && daysVal <= 15;
+
+                    let borderClass = "border-gray-300 dark:border-neutral-700";
+                    let textClass = "text-black dark:text-white";
+
+                    if (isUrgent) {
+                        borderClass = "border-red-500";
+                        textClass = "text-red-600 dark:text-red-500";
+                    } else if (isWarning) {
+                        borderClass = "border-amber-500";
+                        textClass = "text-amber-600 dark:text-amber-400";
+                    }
+
+                    return `
+                        <div class="bg-gray-50 dark:bg-neutral-900/80 p-2.5 border-l-2 ${borderClass} flex justify-between items-center rounded-r border-t border-b border-r border-gray-200 dark:border-neutral-800">
+                            <div class="truncate mr-2">
+                                <div class="font-bold text-xs text-black dark:text-white truncate">${item.name}</div>
+                                <div class="text-[9px] text-gray-500 dark:text-neutral-400 font-semibold truncate">${item.store}</div>
+                            </div>
+                            <div class="text-right flex-shrink-0">
+                                <span class="${textClass} font-bold text-sm block leading-none">${String(displayDays).padStart(2, '0')}</span>
+                                <span class="text-[8px] text-gray-400 dark:text-neutral-500 uppercase font-bold">DÍAS</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // 3. LANZAMIENTOS DE CAMPAÑAS POR POSICIÓN (2026)
+            const monthNamesMap = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+            const monthCountsMap = {};
+
+            screensData.forEach(s => {
+                const dateStr = s.fecha_inicio || s.fecha_objetivo;
+                if (dateStr && dateStr.trim() !== '') {
+                    if (dateStr.startsWith('2026') || dateStr.endsWith('2026')) {
+                        let monthIdx = -1;
+                        if (dateStr.includes('-')) {
+                            const parts = dateStr.split('-');
+                            if (parts.length === 3) {
+                                monthIdx = dateStr.startsWith('2026') ? parseInt(parts[1], 10) - 1 : parseInt(parts[0], 10) - 1;
+                            }
+                        } else if (dateStr.includes('/')) {
+                            const parts = dateStr.split('/');
+                            if (parts.length === 3) {
+                                monthIdx = dateStr.endsWith('2026') ? parseInt(parts[1], 10) - 1 : parseInt(parts[0], 10) - 1;
+                            }
+                        }
+
+                        if (monthIdx >= 0 && monthIdx < 12) {
+                            const mName = monthNamesMap[monthIdx];
+                            monthCountsMap[mName] = {
+                                count: (monthCountsMap[mName] ? monthCountsMap[mName].count : 0) + 1,
+                                idx: monthIdx
+                            };
+                        }
+                    }
+                }
+            });
+
+            const sortedMonths = Object.entries(monthCountsMap)
+                .sort((a, b) => a[1].idx - b[1].idx);
+
+            const launchesContainer = document.getElementById('launchesContainer');
+
+            if (sortedMonths.length === 0) {
+                launchesContainer.innerHTML = `<div class="text-gray-400 dark:text-neutral-500 text-xs w-full text-center">Sin lanzamientos en 2026</div>`;
+                return;
+            }
+
+            const maxMonthVal = Math.max(...sortedMonths.map(m => m[1].count), 1);
+
+            launchesContainer.innerHTML = sortedMonths.map(([mName, data]) => {
+                const count = data.count;
+                const heightPct = Math.max(Math.round((count / maxMonthVal) * 100), 20);
+                const isMax = count === maxMonthVal;
+
+                return `
+                    <div class="text-center flex-1 flex flex-col items-center justify-end h-full">
+                        <span class="text-[10px] font-bold text-black dark:text-white mb-1">${count}</span>
+                        <div class="w-6 ${isMax ? 'bg-black dark:bg-white' : 'bg-gray-300 dark:bg-neutral-700'} rounded-t" style="height: ${heightPct}%"></div>
+                        <span class="text-[9px] text-gray-500 dark:text-neutral-400 font-bold uppercase mt-1">${mName}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // =========================================================================
+        // 5. RENDERIZADO DE PESTAÑAS (TAB 1 Y TAB 2)
+        // =========================================================================
+        function getPlayerStatusBadge(st) {
+            if (st === 'Online') return `<span class="bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-[11px] px-2.5 py-1 rounded-full font-bold inline-flex items-center"><i class="fa-solid fa-circle text-[7px] mr-1.5"></i> ONLINE</span>`;
+            return `<span class="bg-red-50 dark:bg-red-950/80 border border-red-300 dark:border-red-500/30 text-red-700 dark:text-red-400 text-[11px] px-2.5 py-1 rounded-full font-bold inline-flex items-center"><i class="fa-solid fa-power-off text-[7px] mr-1.5"></i> OFFLINE</span>`;
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab1-content').classList.add('hidden');
+            document.getElementById('tab2-content').classList.add('hidden');
+
+            document.getElementById(`${tabId}-btn`).classList.add('active');
+            document.getElementById(`${tabId}-content`).classList.remove('hidden');
+        }
+
+        function parseDateToTimestamp(dateStr) {
+            const p = parseDate(dateStr);
+            return p ? p.getTime() : 0;
+        }
+
+        function renderTab1(filterText = '') {
+            const container = document.getElementById('campaignsContainer');
+            container.innerHTML = '';
+
+            const filtered = screensData.filter(item => {
+                const s = filterText.toLowerCase();
+                const campsStr = item.campaigns.join(' ').toLowerCase();
+                return campsStr.includes(s) ||
+                       item.sucursal.toLowerCase().includes(s) ||
+                       item.id.toLowerCase().includes(s);
+            });
+
+            const grouped = {};
+            filtered.forEach(item => {
+                item.campaigns.forEach(rawCamp => {
+                    const key = rawCamp.trim();
+                    if (!key) return;
+                    if (!grouped[key]) grouped[key] = [];
+                    grouped[key].push(item);
+                });
+            });
+
+            if (Object.keys(grouped).length === 0) {
+                container.innerHTML = `<div class="col-span-2 p-8 text-center bg-white dark:bg-[#0D0D0D] rounded-xl text-gray-400 dark:text-neutral-500">Sincronizando datos privados desde Google Sheets...</div>`;
+                return;
+            }
+
+            const sortedGroupedEntries = Object.entries(grouped).sort((a, b) => {
+                const dateA = parseDateToTimestamp(a[1][0].fecha_inicio || a[1][0].fecha_objetivo);
+                const dateB = parseDateToTimestamp(b[1][0].fecha_inicio || b[1][0].fecha_objetivo);
+                return dateB - dateA;
+            });
+
+            sortedGroupedEntries.forEach(([campName, items]) => {
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-[#0D0D0D] rounded-xl border border-gray-200 dark:border-[#1F1F1F] p-5 flex flex-col justify-between space-y-4 shadow-sm dark:shadow-xl transition-colors";
+
+                let storesSet = new Set();
+                items.forEach(s => storesSet.add(s.sucursal.toUpperCase()));
+
+                let storesHtml = Array.from(storesSet).map(storeStr => {
+                    const storeItems = items.filter(i => i.sucursal.toUpperCase() === storeStr);
+                    const locationsList = storeItems.map(i => i.ubicacion).filter(Boolean).join(' · ');
+                    return `
+                        <div class="py-2.5 border-b border-gray-100 dark:border-neutral-900 text-xs font-bold tracking-wider text-black dark:text-neutral-300 flex flex-wrap justify-between items-center gap-2">
+                            <span>${storeStr}</span>
+                            <span class="text-[10px] text-gray-500 dark:text-neutral-400 font-semibold uppercase text-right">${locationsList || (storeItems.length + ' pos.')}</span>
+                        </div>
+                    `;
+                }).join('');
+
+                const statsUrl = resolveStatsUrl(campName);
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex flex-wrap justify-between items-start gap-2 mb-3">
+                            <h2 class="puma-font-title text-2xl tracking-wide text-black dark:text-white">${campName}</h2>
+                            <a href="${statsUrl}" target="_blank" class="bg-black hover:bg-black dark:bg-white text-white dark:bg-white dark:hover:bg-black dark:bg-white dark:text-black dark:hover:text-white text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded transition shadow-sm inline-flex items-center gap-1">
+                                PERFORMANCE REAL TIME <i class="fa-solid fa-arrow-up-right-from-square text-[9px] ml-1"></i>
+                            </a>
+                        </div>
+                        <div class="inline-block bg-gray-100 dark:bg-[#1A1A1A] text-gray-700 dark:text-neutral-400 text-[10px] font-bold px-2.5 py-1 rounded uppercase tracking-wider mb-4 border border-gray-200 dark:border-neutral-800">
+                            INICIO: ${items[0].fecha_inicio || '2026'}
+                        </div>
+                        <div class="mt-2 space-y-1">
+                            ${storesHtml}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderTab2(filterText = '') {
+            const tbody = document.getElementById('individualTableBody');
+            tbody.innerHTML = '';
+
+            const filtered = screensData.filter(item => {
+                const s = filterText.toLowerCase();
+                const campsStr = item.campaigns.join(' ').toLowerCase();
+                return campsStr.includes(s) ||
+                       item.sucursal.toLowerCase().includes(s) ||
+                       item.id.toLowerCase().includes(s) ||
+                       item.ubicacion.toLowerCase().includes(s);
+            });
+
+            filtered.forEach(s => {
+                const tr = document.createElement('tr');
+                tr.className = "border-t border-gray-200 dark:border-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-900/50 transition text-xs";
+                
+                let ticketBtnHtml = `<button onclick="openTicketModal('${s.id}', '${s.sucursal}')" class="text-gray-700 dark:text-neutral-400 hover:text-black dark:hover:text-white text-[10px] bg-gray-100 dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 px-2.5 py-1 rounded font-bold uppercase tracking-wider transition"><i class="fa-solid fa-plus mr-1"></i> Crear Ticket</button>`;
+                
+                if (s.ticket) {
+                    if (s.ticket.url) {
+                        ticketBtnHtml = `<a href="${s.ticket.url}" target="_blank" class="bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-500/40 text-amber-800 dark:text-amber-400 px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider hover:bg-amber-100 dark:hover:bg-amber-900/80 transition inline-flex items-center gap-1"><i class="fa-solid fa-ticket"></i> ${s.ticket.text} <i class="fa-solid fa-arrow-up-right-from-square text-[8px]"></i></a>`;
+                    } else {
+                        ticketBtnHtml = `<button onclick="viewExistingTicket('${s.id}', '${s.ticket.text}')" class="bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-500/40 text-amber-800 dark:text-amber-400 px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider hover:bg-amber-100 dark:hover:bg-amber-900/80 transition inline-flex items-center"><i class="fa-solid fa-ticket mr-1"></i> ${s.ticket.text}</button>`;
+                    }
+                }
+
+                const campaignsBadgesHtml = s.campaigns.map(c => 
+                    `<span class="bg-gray-100 dark:bg-neutral-800 text-black dark:text-white border border-gray-300 dark:border-neutral-700 px-2 py-0.5 rounded font-bold text-[10px] uppercase tracking-wider inline-block">${c}</span>`
+                ).join(' ');
+
+                tr.innerHTML = `
+                    <td class="p-3.5 font-black text-black dark:text-white whitespace-nowrap">${s.id}</td>
+                    <td class="p-3.5">
+                        <div class="font-black text-black dark:text-white">${s.sucursal}</div>
+                        ${s.direccion ? `<div class="text-[10px] text-gray-500 dark:text-neutral-400 font-medium">${s.direccion}</div>` : ''}
+                    </td>
+                    <td class="p-3.5">
+                        <div class="font-bold text-black dark:text-neutral-300">${s.pantalla}</div>
+                        <div class="text-[10px] text-gray-500 dark:text-neutral-500 font-medium">${s.res} | ${s.orientacion}</div>
+                    </td>
+                    <td class="p-3.5 text-gray-900 dark:text-neutral-400 font-semibold">${s.ubicacion}</td>
+                    <td class="p-3.5"><div class="flex flex-wrap gap-1">${campaignsBadgesHtml}</div></td>
+                    <td class="p-3.5">${getPlayerStatusBadge(s.status)}</td>
+                    <td class="p-3.5">${ticketBtnHtml}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // =========================================================================
+        // 6. GESTIÓN DE TICKETS DE SOPORTE (POST AL MISMO APPS SCRIPT PRIVADO)
+        // =========================================================================
+        function viewExistingTicket(id, ticketInfo) {
+            const screen = screensData.find(s => s.id === id);
+            const content = document.getElementById('ticketContent');
+            content.innerHTML = `
+                <div class="bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-500/40 p-4 rounded-xl space-y-3">
+                    <div class="font-bold text-amber-800 dark:text-amber-400 flex items-center gap-2">
+                        <i class="fa-solid fa-triangle-exclamation"></i> TICKET ABIERTO: ${ticketInfo}
+                    </div>
+                    <p class="text-gray-800 dark:text-neutral-300 text-[11px]">
+                        Esta posición <strong>${id}</strong> (${screen ? screen.sucursal : 'Tienda'}) tiene una incidencia técnica registrada en el planificador.
+                    </p>
+                    <div class="text-[10px] text-gray-500 dark:text-neutral-400 pt-2 border-t border-amber-200 dark:border-neutral-800 flex justify-between">
+                        <span>ESTADO: EN REVISIÓN</span>
+                        <span>SLA ESTIMADO: &lt; 4 HORAS</span>
+                    </div>
+                    <button onclick="closeModal('ticketModal')" class="w-full bg-black text-white dark:bg-white dark:text-black py-2 rounded-lg font-bold text-xs uppercase tracking-wider hover:bg-gray-800 dark:hover:bg-neutral-200 transition mt-2">
+                        ENTENDIDO
+                    </button>
+                </div>
+            `;
+            document.getElementById('ticketModal').classList.remove('hidden');
+        }
+
+        function openTicketModal(id, sucursal) {
+            const screen = screensData.find(s => s.id === id) || { id, sucursal };
+            const content = document.getElementById('ticketContent');
+            content.innerHTML = `
+                <div class="space-y-3">
+                    <p class="text-gray-800 dark:text-neutral-300">Crear incidencia técnica para <strong>${screen.id}</strong> (${screen.sucursal}).</p>
+                    <textarea id="ticketTextarea" class="w-full bg-gray-50 dark:bg-neutral-900 border border-gray-300 dark:border-neutral-800 rounded-lg p-2 text-black dark:text-white focus:ring-1 focus:ring-black dark:focus:ring-white outline-none text-xs" rows="3" placeholder="Describe la falla observada..."></textarea>
+                    <button id="btnSubmitTicket" onclick="submitTicket('${screen.id}', '${screen.sucursal}')" class="w-full bg-black text-white dark:bg-white dark:text-black py-2 rounded-lg font-bold uppercase tracking-wider hover:bg-gray-800 dark:hover:bg-neutral-200 transition">Registrar Incidencia</button>
+                </div>
+            `;
+            document.getElementById('ticketModal').classList.remove('hidden');
+        }
+
+        async function submitTicket(id, sucursal) {
+            const desc = document.getElementById('ticketTextarea').value;
+            const btn = document.getElementById('btnSubmitTicket');
+            const content = document.getElementById('ticketContent');
+
+            if (!desc.trim()) {
+                alert("Por favor escribe una descripción de la falla.");
+                return;
+            }
+
+            btn.innerText = "ENVIANDO TICKET...";
+            btn.disabled = true;
+
+            try {
+                await fetch(APPS_SCRIPT_API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        marca: 'PUMA',
+                        id: id,
+                        sucursal: sucursal,
+                        descripcion: desc
+                    })
+                });
+
+                content.innerHTML = `
+                    <div class="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-500/40 p-4 rounded-xl space-y-3 text-center">
+                        <div class="text-emerald-600 dark:text-emerald-400 text-3xl">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+                        <div class="font-black text-sm uppercase tracking-wider text-black dark:text-white">
+                            INCIDENCIA REGISTRADA CON ÉXITO
+                        </div>
+                        <p class="text-[11px] text-gray-800 dark:text-neutral-300 leading-relaxed">
+                            REGISTRO CREADO PARA LA POSICIÓN <strong class="text-black dark:text-white">${id}</strong>. SE HA ENVIADO UN CORREO ELECTRÓNICO CON LOS DETALLES DEL TICKET Y SU ENLACE DE SEGUIMIENTO.
+                        </p>
+                        <div class="text-[10px] text-gray-500 dark:text-neutral-400 pt-2 border-t border-emerald-200 dark:border-neutral-800">
+                            UN OPERADOR ASIGNARÁ EL NÚMERO Y ENLACE FINAL EN EL PLANIFICADOR CENTRAL.
+                        </div>
+                        <button onclick="closeModal('ticketModal')" class="w-full bg-black text-white dark:bg-white dark:text-black py-2 rounded-lg font-bold text-xs uppercase tracking-wider hover:bg-gray-800 dark:hover:bg-neutral-200 transition mt-2">
+                            ACEPTAR
+                        </button>
+                    </div>
+                `;
+
+            } catch (err) {
+                console.error("Error al enviar el ticket:", err);
+                alert("Ocurrió un error al enviar la incidencia.");
+                btn.innerText = "REGISTRAR INCIDENCIA";
+                btn.disabled = false;
+            }
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const val = e.target.value;
+            renderTab1(val);
+            renderTab2(val);
+        });
+
+        // Inicializar Tema y Autenticación al cargar la página
+        initTheme();
+        checkAuth();
+
+        // Refresco de datos cada 30 segundos
+        setInterval(() => {
+            if (sessionStorage.getItem('puma_session') === 'authenticated') {
+                fetchSheetsData();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
