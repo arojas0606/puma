@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PUMA - Digital Display Manager 2026 (v7)</title>
+    <title>PUMA - Digital Display Manager 2026 (v8)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -810,11 +810,15 @@
 
                 let storesHtml = Array.from(storesSet).map(storeStr => {
                     const storeItems = items.filter(i => i.sucursal.toUpperCase() === storeStr);
-                    const locationsList = storeItems.map(i => i.ubicacion).filter(Boolean).join(' · ');
+                    const locationsBadges = storeItems
+                        .map(i => i.ubicacion)
+                        .filter(Boolean)
+                        .map(loc => `<span class="bg-gray-100 dark:bg-neutral-800/90 text-gray-800 dark:text-neutral-200 border border-gray-200 dark:border-neutral-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide inline-flex items-center gap-1"><i class="fa-solid fa-location-dot text-[8px] text-gray-500 dark:text-neutral-400"></i>${loc}</span>`)
+                        .join(' ');
                     return `
-                        <div class="py-2.5 border-b border-gray-100 dark:border-neutral-900 text-xs font-bold tracking-wider text-black dark:text-neutral-300 flex flex-wrap justify-between items-center gap-2">
+                        <div class="py-2.5 border-b border-gray-100 dark:border-neutral-900 text-xs font-bold tracking-wider text-black dark:text-neutral-200 flex flex-wrap justify-between items-center gap-2">
                             <span>${storeStr}</span>
-                            <span class="text-[10px] text-gray-500 dark:text-neutral-400 font-semibold uppercase text-right">${locationsList || (storeItems.length + ' pos.')}</span>
+                            <div class="flex flex-wrap justify-end gap-1">${locationsBadges || `<span class="text-[10px] text-gray-600 dark:text-neutral-300 font-semibold">${storeItems.length} pos.</span>`}</div>
                         </div>
                     `;
                 }).join('');
@@ -882,7 +886,7 @@
                         <div class="font-bold text-black dark:text-neutral-300">${s.pantalla}</div>
                         <div class="text-[10px] text-gray-500 dark:text-neutral-500 font-medium">${s.res} | ${s.orientacion}</div>
                     </td>
-                    <td class="p-3.5 text-gray-900 dark:text-neutral-400 font-semibold">${s.ubicacion}</td>
+                    <td class="p-3.5"><span class="bg-gray-100 dark:bg-neutral-800/80 text-gray-800 dark:text-neutral-200 border border-gray-200 dark:border-neutral-700 px-2 py-0.5 rounded text-[11px] font-semibold inline-flex items-center gap-1"><i class="fa-solid fa-location-dot text-[9px] text-gray-500 dark:text-neutral-400"></i>${s.ubicacion}</span></td>
                     <td class="p-3.5"><div class="flex flex-wrap gap-1">${campaignsBadgesHtml}</div></td>
                     <td class="p-3.5">${getPlayerStatusBadge(s.status)}</td>
                     <td class="p-3.5">${ticketBtnHtml}</td>
